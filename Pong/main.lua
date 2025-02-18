@@ -94,7 +94,16 @@ end
 -- Se ejecuta en cada frame, pasando 'dt' (nuestra delta en segundos
 -- desde el último frame), algo calculado por LOVE
 function love.update(dt)
-    if gameState == 'play' then
+    if gameState == 'serve' then
+        -- antes de empezar a jugar, inicializamos la dirección de la
+        -- pelota según quién puntuó (quién está sirviendo ahora)
+        ball.dy = math.random(-50, 50)
+        if servingPlayer == 1 then
+            ball.dx = math.random(140, 200)
+        else
+            ball.dx = -math.random(140, 200)
+        end
+    elseif gameState == 'play' then
         -- detectamos la colisión de la pelota con las paletas, invirtiendo
         -- la velocidad dx si ocurre y aumentándola ligeramente, y alterando
         -- dy basándonos en la posición de la colisión
@@ -142,7 +151,7 @@ function love.update(dt)
         servingPlayer = 1
         player2Score = player2Score + 1
         ball:reset()
-        gameState = 'start'
+        gameState = 'serve'
     end
 
     -- si hemos sobrepasado el lado derecho (jugador 1 puntúa)
@@ -150,7 +159,7 @@ function love.update(dt)
         servingPlayer = 2
         player1Score = player1Score + 1
         ball:reset()
-        gameState = 'start'
+        gameState = 'serve'
     end
 
     -- movimiento del jugador 1
@@ -192,12 +201,9 @@ function love.keypressed(key)
     -- la pelota se moverá en direcciones aleatorias
     elseif key == 'enter' or key == 'return' then
         if gameState == 'start' then
+            gameState = 'serve'
+        elseif gameState == 'serve' then
             gameState = 'play'
-        else
-            gameState = 'start'
-
-            -- reseteamos la posición de la pelota
-            ball:reset()
         end
     end
 end
@@ -217,16 +223,19 @@ function love.draw()
     -- dibujamos diferentes cosas según el estado del juego
     love.graphics.setFont(smallFont)
 
-    if gameState == 'start' then
-        love.graphics.printf('Hello Pong!', 0, 20, VIRTUAL_WIDTH, 'center')
-    else
-        love.graphics.printf("Let's Play!", 0, 20, VIRTUAL_WIDTH, 'center')
-    end
+    displayScore()
 
-    -- dibujamos las puntuaciones
-    love.graphics.setFont(scoreFont) -- debemos cambiar la fuente antes de pintarlas
-    love.graphics.print(tostring(player1Score), VIRTUAL_WIDTH / 2 - 50, VIRTUAL_HEIGHT / 3)
-    love.graphics.print(tostring(player2Score), VIRTUAL_WIDTH / 2 + 30, VIRTUAL_HEIGHT / 3)
+    if gameState == 'start' then
+        love.graphics.setFont(smallFont)
+        love.graphics.printf('Bienvenide a Pong!', 0, 10, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('Pulsa Enter para empezar!', 0, 20, VIRTUAL_WIDTH, 'center')
+    elseif gameState == 'serve' then
+        love.graphics.setFont(smallFont)
+        love.graphics.printf('Jugador ' .. tostring(servingPlayer) .. " sirve!", 0, 10, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('Pulsa Enter para servir!', 0, 20, VIRTUAL_WIDTH, 'center')
+    elseif gameState == 'play' then
+        -- no hay mensajes que mostrar en el momento del juego
+    end
 
     -- renderizamos las paletas
     player1:render()
@@ -250,4 +259,15 @@ function displayFPS()
     love.graphics.setFont(smallFont)
     love.graphics.setColor(0, 255/255, 0, 255/255)
     love.graphics.print('FPS: ' .. tostring(love.timer.getFPS()), 10, 10) -- .. es para concatenar strings
+end
+
+
+--[[
+    Dibujamos la puntuación en la pantalla.
+]]
+function displayScore()
+    -- dibujamos las puntuaciones
+    love.graphics.setFont(scoreFont) -- debemos cambiar la fuente antes de pintarlas
+    love.graphics.print(tostring(player1Score), VIRTUAL_WIDTH / 2 - 50, VIRTUAL_HEIGHT / 3)
+    love.graphics.print(tostring(player2Score), VIRTUAL_WIDTH / 2 + 30, VIRTUAL_HEIGHT / 3)
 end
