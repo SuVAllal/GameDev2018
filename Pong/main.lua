@@ -94,6 +94,48 @@ end
 -- Se ejecuta en cada frame, pasando 'dt' (nuestra delta en segundos
 -- desde el último frame), algo calculado por LOVE
 function love.update(dt)
+    if gameState == 'play' then
+        -- detectamos la colisión de la pelota con las paletas, invirtiendo
+        -- la velocidad dx si ocurre y aumentándola ligeramente, y alterando
+        -- dy basándonos en la posición de la colisión
+        if ball:collides(player1) then
+            ball.dx = -ball.dx * 1.03
+            ball.x = player1.x + 5 -- si lo dejamos tal cual detectará otra colisión al momento, por eso debemos mover un poco la posición (5 es el tamaño de la paleta, queremos que esté a su derecha)
+
+            -- si hay colisión modificamos la velocidad de dy con cada colisión (cambiamos el ángulo/dirección de la pelota, sino iría siempre en línea recta)
+            if ball.dy < 0 then -- si la pelota viene desde abajo (o sea, va hacia arriba), queremos que siga yendo hacia arriba (no que vuelva a abajo, que es de donde viene)
+                ball.dy = -math.random(10, 150) -- números aleatorios, pueden ser cualquier valor que escojamos
+            else -- ídem pero hacia abajo
+                ball.dy = math.random(10, 150)
+            end
+        end
+        if ball:collides(player2) then
+            ball.dx = -ball.dx * 1.03
+            ball.dx = player2.x - 4 -- 4, ya que es el tamaño de la pelota
+
+            -- estas funciones no van dentro de la clase Ball ya que collides
+            -- solo devuelve true o false, que diga si colisiona o no, los cambios
+            -- que la colisión conlleve no forman parte de la función
+            -- dependiendo de lo que devuelva collides, decidimos qué hacer en EL MAIN
+            if ball.dy < 0 then
+                ball.dy = -math.random(10, 150)
+            else
+                ball.dy = math.random(10, 150)
+            end
+        end
+
+        -- detectamos colisiones con los bordes superior e inferior de la pantalla
+        if ball.y <= 0 then -- si la pelota está en la parte superior de la pantalla
+            ball.y = 0
+            ball.dy = -ball.dy -- para que vaya en dirección opuesta
+        end
+
+        if ball.y >= VIRTUAL_HEIGHT - 4 then -- está en la parte de abajo de la pantalla (-4 ya que es el tamaño de la pelota, sino la pelota saldría de la pantalla)
+            ball.y = VIRTUAL_HEIGHT - 4
+            ball.dy = -ball.dy
+        end
+    end
+
     -- movimiento del jugador 1
     if love.keyboard.isDown('w') then
         player1.dy = -PADDLE_SPEED

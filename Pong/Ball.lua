@@ -21,7 +21,29 @@ function Ball:init(x, y, width, height)
     -- variables para gestionar la velocidad en el eje X e Y, ya que
     -- la pelota se puede mover en dos dimensiones
     self.dy = math.random(2) == 1 and -100 or 100
-    self.dx = math.random(-50, 50)
+    self.dx = math.random(2) == 1 and math.random(-80, -100) or math.random(80, 100)
+end
+
+
+--[[
+    Espera una paleta como parámetro y devuelve true o false dependiendo
+    de si los rectángulos se solapan
+]]
+function Ball:collides(paddle)
+    -- primero, miramos si la esquina izquierda de la pelota está más allá de la 
+    -- esquina derecha de la paleta
+    if self.x > paddle.x + paddle.width or paddle.x > self.x + self.width then
+        return false -- entonces no colisiona
+    end
+
+    -- después miramos si la esquina inferior de la pelota está más arriba que la esquina
+    -- superior de la paleta
+    if self.y > paddle.y + paddle.height or paddle.y > self.y + self.height then
+        return false -- entonces no colisiona
+    end
+
+    -- si no se cumple alguna de las anteriores, entonces están colisionando
+    return true
 end
 
 
