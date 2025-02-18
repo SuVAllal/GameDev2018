@@ -10,7 +10,24 @@
 -- push es una librería que nos permitirá dibujar nuestro juego con una
 -- resolución virtual, en lugar de usar la resolución basada en el tamaño
 -- de nuestra ventana, usada para aportar una estética más retro
+-- 
+-- https://github.com/Ulydev/push
 push = require 'push'
+
+
+-- la librería 'class' nos permitirá representar cualquier objeto en
+-- nuestro juego como código, en vez de usar muchas variables y métodos
+--
+-- https://github.com/vrld/hump/blob/master/class.lua
+Class = require 'class'
+
+-- clase 'Paddle', guarda la posición y las dimensiones para cada paleta
+-- y la lógica para renderizarlas
+require 'Paddle'
+
+-- clase 'Ball', ídem que la clase 'Paddle' pero para la pelota de juego
+require 'Ball'
+
 
 -- Usaremos esta resolución virtual, pero nuestro juego se ejecutará
 -- en una ventana con la resolución real que declaramos abajo
@@ -21,7 +38,8 @@ VIRTUAL_HEIGHT = 243
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 
-PADDLE_SPEED = 200 -- Velocidad a la que se moverán las raquetas, multiplicada por dt
+PADDLE_SPEED = 200 -- Velocidad a la que se moverán las paletas, multiplicada por dt
+
 
 -- Función usada para inicializar el juego, establece qué pasa nada más empezar
 function love.load()
@@ -36,9 +54,6 @@ function love.load()
     -- Usamos una fuente más retro con tamaño 8
     smallFont = love.graphics.newFont('font.ttf', 8)
 
-    -- Usamos la misma fuente pero con un tamaño mayor para las puntuaciones
-    scoreFont = love.graphics.newFont('font.ttf', 32)
-
     -- Establecemos la fuente como la fuente activa de LOVE2D
     love.graphics.setFont(smallFont)
 
@@ -47,30 +62,17 @@ function love.load()
     -- nuestra llamada love.window.setMode
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
         fullscreen = false,
-        resizable = false,
+        resizable = true,
         vsync = true
     })
 
-    -- Variables para la puntuación de cada jugador, usadas para mostrarlas
-    -- por pantalla y saber quién va ganando
-    player1Score = 0
-    player2Score = 0
+    -- inicializamos las paletas de los jugadores, las hacemos globales
+    -- para que otras funciones y módulos puedan usarlas
+    player1 = Paddle(10, 30, 5, 20)
+    player2 = Paddle(VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 30, 5, 20)
 
-    -- Posición de las raquetas en el eje Y (solo se pueden mover arriba o abajo)
-    -- Las colocamos en la misma posición que cuando las creamos
-    player1Y = 30
-    player2Y = VIRTUAL_HEIGHT - 50
-
-    -- variables para la velocidad (delta y, delta x) y posición de la pelota cuando empieza el juego
-    -- colocamos la pelota inicialmente en el centro, pero guardaremos su posición
-    -- en variables, porque esta se va a ir modificando
-    ballX = VIRTUAL_WIDTH / 2 - 2
-    ballY = VIRTUAL_HEIGHT / 2 - 2
-
-    -- math.random nos devuelve un numero aleatorio dentro del rango de los números que se le manden
-    -- la velocidad de la pelota también va a ir variando para complicar el juego
-    ballDX = math.random(2) == 1 and 100 or -100 -- si el número es 1, se mueve hacia la derecha (100), si es 2, se mueve hacia la izquierda (-100)
-    ballDY = math.random(-50, 50) -- se mueve hacia arriba o hacia abajo con una velocidad aleatoria
+    -- colocamos la pelota en el centro de la pantalla
+    ball = Ball(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
 
     -- estado del juego, usado para las distinas partes del juego (beginning,
     -- menus, main game, high score list, etc.), lo usaremos para determinar
@@ -84,31 +86,30 @@ end
 function love.update(dt)
     -- movimiento del jugador 1
     if love.keyboard.isDown('w') then
-        -- nos movemos en negativo ya que el eje Y crece hacia abajo ( (-) + (-) = -, sube)
-        -- limitamos la posición usando math.max para evitar que se salga la
-        -- paleta de la pantalla, pues como el eje Y crece hacia abajo el 0 es el límite superior de la pantalla
-        player1Y = math.max(0, player1Y + -PADDLE_SPEED * dt)
+        player1.dy = -PADDLE_SPEED
     elseif love.keyboard.isDown('s') then
-        -- nos movemos en positivo para bajar
-        -- math.min nos devuelve el menor de dos valores: la parte de abajo de la pantalla
-        -- menos la altura de la paleta, y la posición deseada por el jugador, para asegurarnos
-        -- de no salir de los límites de la pantalla
-        player1Y = math.min(VIRTUAL_HEIGHT - 20, player1Y + PADDLE_SPEED * dt)
+        player1.dy = PADDLE_SPEED
+    else
+        player1.dy = 0
     end
 
     -- movimiento del jugador 2
     if love.keyboard.isDown('up') then
-        player2Y = math.max(0, player2Y + -PADDLE_SPEED * dt)
+        player2.dy = -PADDLE_SPEED
     elseif love.keyboard.isDown('down') then
-        player2Y = math.min(VIRTUAL_HEIGHT - 20, player2Y + PADDLE_SPEED * dt)
+        player2.dy = PADDLE_SPEED
+    else
+        player2.dy = 0
     end
 
-    -- actualizamos la posición de la pelota SOLO si estamos en el estado 'jugando',
-    -- la velocidad es independiente del framerate
+    -- actualizamos la pelota basándonos en la velocidad SOLO si estamos 
+    -- en el estado 'jugando', la velocidad es independiente del framerate
     if gameState == 'play' then
-        ballX = ballX + ballDX * dt
-        ballY = ballY + ballDY * dt
+        ball:update(dt)
     end
+
+    player1:update(dt)
+    player2:update(dt)
 end
 
 
@@ -126,13 +127,8 @@ function love.keypressed(key)
         else
             gameState = 'start'
 
-            -- la pelota empieza en el medio de la pantalla
-            ballX = VIRTUAL_WIDTH / 2 - 2
-            ballY = VIRTUAL_HEIGHT / 2 - 2
-
-            -- le damos un valor aleatorio a la velocidad
-            ballDX = math.random(2) == 1 and 100 or -100 -- esto en C sería: if(math.random(2) == 1) ? 100 : -100
-            ballDY = math.random(-50, 50) * 1.5
+            -- reseteamos la posición de la pelota
+            ball:reset()
         end
     end
 end
@@ -147,28 +143,23 @@ function love.draw()
     push:apply('start')
 
     -- Pintamos el fondo de la pantalla de un color
-    love.graphics.clear(40/255, 45/255, 52/255, 255/255)
+    love.graphics.clear(255/255, 105/255, 180/255, 255/255)
 
-    -- Texto de bienvenida en la parte de arriba de la pantalla
-    love.graphics.printf(
-        'Hello Pong!',           -- texto a renderizar
-        0,                       -- starting X (0 ya que vamos a centrarlo respecto al ancho)
-        20,                      -- starting Y (en la parte de arriba de la pantalla, el tamaño por defecto de la pantalla en LOVE es 12)
-        VIRTUAL_WIDTH,           -- numero de pixeles en los que centrarse (lo centramos en toda la pantalla)
-        'center')                -- modo de alineación, puede ser 'center', 'left' o 'right'
+    -- dibujamos diferentes cosas según el estado del juego
+    love.graphics.setFont(smallFont)
 
-    -- Dibujamos las puntuaciones a la izquierda y derecha de la pantalla
-    -- Debemos cambiar de fuente antes de pintar o LOVE cogerá la última
-    -- establecida, que es la de 8 píxeles
-    love.graphics.setFont(scoreFont)
-    love.graphics.print(tostring(player1Score), VIRTUAL_WIDTH / 2 - 50, VIRTUAL_HEIGHT / 3)
-    love.graphics.print(tostring(player2Score), VIRTUAL_WIDTH / 2 + 30, VIRTUAL_HEIGHT / 3)
+    if gameState == 'start' then
+        love.graphics.printf('Hello Pong!', 0, 20, VIRTUAL_WIDTH, 'center')
+    else
+        love.graphics.printf("Let's Play!", 0, 20, VIRTUAL_WIDTH, 'center')
+    end
 
-    -- Las raquetas son simples rectángulos que dibujamos en la pantalla
-    -- en ciertas posiciones, al igual que la pelota
-    love.graphics.rectangle('fill', 10, player1Y, 5, 20) -- Raquet izquierda
-    love.graphics.rectangle('fill', VIRTUAL_WIDTH - 10, player2Y, 5, 20) -- Raqueta derecha
-    love.graphics.rectangle('fill', ballX, ballY, 4, 4) -- Pelota en el centro
+    -- renderizamos las paletas
+    player1:render()
+    player2:render()
+
+    -- renderizamos la pelota
+    ball:render()
 
     -- termina de renderizar en resolución virtual
     push:apply('end')
