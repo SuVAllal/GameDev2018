@@ -48,11 +48,17 @@ function love.load()
     -- (prueba a eliminar esta función para ver la diferencia!)
     love.graphics.setDefaultFilter('nearest', 'nearest')
 
+    -- título de la ventana
+    love.window.setTitle('Pong')
+
     -- generamos una semilla aleatoria basada en la hora actual
     math.randomseed(os.time())
 
     -- Usamos una fuente más retro con tamaño 8
     smallFont = love.graphics.newFont('font.ttf', 8)
+
+    -- fuente más grande para las puntuaciones
+    scoreFont = love.graphics.newFont('font.ttf', 32)
 
     -- Establecemos la fuente como la fuente activa de LOVE2D
     love.graphics.setFont(smallFont)
@@ -62,9 +68,13 @@ function love.load()
     -- nuestra llamada love.window.setMode
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
         fullscreen = false,
-        resizable = true,
+        resizable = false,
         vsync = true
     })
+
+    -- inicializamos las variables de las puntuaciones
+    player1Score = 0
+    player2Score = 0
 
     -- inicializamos las paletas de los jugadores, las hacemos globales
     -- para que otras funciones y módulos puedan usarlas
@@ -154,6 +164,11 @@ function love.draw()
         love.graphics.printf("Let's Play!", 0, 20, VIRTUAL_WIDTH, 'center')
     end
 
+    -- dibujamos las puntuaciones
+    love.graphics.setFont(scoreFont) -- debemos cambiar la fuente antes de pintarlas
+    love.graphics.print(tostring(player1Score), VIRTUAL_WIDTH / 2 - 50, VIRTUAL_HEIGHT / 3)
+    love.graphics.print(tostring(player2Score), VIRTUAL_WIDTH / 2 + 30, VIRTUAL_HEIGHT / 3)
+
     -- renderizamos las paletas
     player1:render()
     player2:render()
@@ -161,6 +176,19 @@ function love.draw()
     -- renderizamos la pelota
     ball:render()
 
+    -- nueva función para mostrar cómo ver los FPS en LÖVE2D
+    displayFPS()
+
     -- termina de renderizar en resolución virtual
     push:apply('end')
+end
+
+
+--[[
+    Renderizamos los FPS
+]]
+function displayFPS()
+    love.graphics.setFont(smallFont)
+    love.graphics.setColor(0, 255/255, 0, 255/255)
+    love.graphics.print('FPS: ' .. tostring(love.timer.getFPS()), 10, 10) -- .. es para concatenar strings
 end
