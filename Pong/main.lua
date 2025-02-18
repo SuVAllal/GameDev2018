@@ -136,6 +136,23 @@ function love.update(dt)
         end
     end
 
+    -- si tocamos el lado derecho o izquiero de la pantalla, volver
+    -- al estado inicial y actualizar la puntuación
+    if ball.x < 0 then -- si hemos sobrepasado el lado izquierdo (jugador 2 puntúa)
+        servingPlayer = 1
+        player2Score = player2Score + 1
+        ball:reset()
+        gameState = 'start'
+    end
+
+    -- si hemos sobrepasado el lado derecho (jugador 1 puntúa)
+    if ball.x > VIRTUAL_WIDTH then
+        servingPlayer = 2
+        player1Score = player1Score + 1
+        ball:reset()
+        gameState = 'start'
+    end
+
     -- movimiento del jugador 1
     if love.keyboard.isDown('w') then
         player1.dy = -PADDLE_SPEED
