@@ -54,8 +54,9 @@ function love.load()
     -- generamos una semilla aleatoria basada en la hora actual
     math.randomseed(os.time())
 
-    -- Usamos una fuente más retro con tamaño 8
+    -- Usamos una fuente más retro con tamaño 8 y 16
     smallFont = love.graphics.newFont('font.ttf', 8)
+    largeFont = love.graphics.newFont('font.ttf', 16)
 
     -- fuente más grande para las puntuaciones
     scoreFont = love.graphics.newFont('font.ttf', 32)
@@ -146,25 +147,42 @@ function love.update(dt)
             ball.y = VIRTUAL_HEIGHT - 4
             ball.dy = -ball.dy
         end
+
+        -- si tocamos el lado derecho o izquiero de la pantalla, volver
+        -- al estado inicial y actualizar la puntuación
+        if ball.x < 0 then -- si hemos sobrepasado el lado izquierdo (jugador 2 puntúa)
+            servingPlayer = 1
+            player2Score = player2Score + 1
+
+            -- si hemos llegado a marcar 10 puntos, el juego termina,
+            -- cambiamos el estado a terminado para mostrar el mensaje
+            -- de victoria
+            if player2Score == 10 then
+                winningPlayer = 2
+                gameState = 'done'
+            else
+                gameState = 'serve'
+                ball:reset() -- recolocamos la pelota en el centro de la pantalla
+            end
+        end
+
+        -- si hemos sobrepasado el lado derecho (jugador 1 puntúa)
+        if ball.x > VIRTUAL_WIDTH then
+            servingPlayer = 2
+            player1Score = player1Score + 1
+
+
+            if player1Score == 10 then 
+                winningPlayer = 1
+                gameState = 'done'
+            else
+                gameState = 'serve'
+                ball:reset()
+            end
+        end
     end
 
-    -- si tocamos el lado derecho o izquiero de la pantalla, volver
-    -- al estado inicial y actualizar la puntuación
-    if ball.x < 0 then -- si hemos sobrepasado el lado izquierdo (jugador 2 puntúa)
-        servingPlayer = 1
-        player2Score = player2Score + 1
-        ball:reset()
-        gameState = 'serve'
-    end
-
-    -- si hemos sobrepasado el lado derecho (jugador 1 puntúa)
-    if ball.x > VIRTUAL_WIDTH then
-        servingPlayer = 2
-        player1Score = player1Score + 1
-        ball:reset()
-        gameState = 'serve'
-    end
-
+    
     -- movimiento del jugador 1
     if love.keyboard.isDown('w') then
         player1.dy = -PADDLE_SPEED
@@ -207,6 +225,23 @@ function love.keypressed(key)
             gameState = 'serve'
         elseif gameState == 'serve' then
             gameState = 'play'
+        elseif gameState == 'done' then
+            -- el juego se reinicia una vez haya terminado, pero sirve
+            -- el jugador que perdió en la anterior partida
+            gameState = 'serve'
+
+            ball:reset()
+
+            -- reiniciamos el marcador
+            player1Score = 0
+            player2Score = 0
+
+            -- sirve el jugador que perdió antes
+            if winningPlayer == 1 then
+                servingPlayer = 2
+            else
+                servingPlayer = 1
+            end
         end
     end
 end
@@ -238,6 +273,11 @@ function love.draw()
         love.graphics.printf('Pulsa Enter para servir!', 0, 20, VIRTUAL_WIDTH, 'center')
     elseif gameState == 'play' then
         -- no hay mensajes que mostrar en el momento del juego
+    elseif gameState == 'done' then
+        love.graphics.setFont(largeFont)
+        love.graphics.printf('Jugador ' .. tostring(winningPlayer) .. ' ha ganado!', 0, 10, VIRTUAL_WIDTH, 'center')
+        love.graphics.setFont(smallFont)
+        love.graphics.printf('Pulsa Enter para volver a jugar!', 0, 30, VIRTUAL_WIDTH, 'center')
     end
 
     -- renderizamos las paletas
