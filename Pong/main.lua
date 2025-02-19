@@ -64,6 +64,15 @@ function love.load()
     -- Establecemos la fuente como la fuente activa de LOVE2D
     love.graphics.setFont(smallFont)
 
+    -- efectos de sonido, más adelante podemos simplemente indexar esta
+    -- tabla y llamar a cada sonido usando el método 'play'
+    sounds = { -- ponemos los pares de claves entre corchetes [] para que genere los índices
+        ['paddle_hit'] = love.audio.newSource('sounds/paddle_hit.wav', 'static'), -- los espacios en las claves no son válidos
+        ['score'] = love.audio.newSource('sounds/score.wav', 'static'),
+        ['wall_hit'] = love.audio.newSource('sounds/wall_hit.wav', 'static')
+    }
+    -- llamar a las claves usando 'sounds.paddle_hit' o 'sounds['paddle_hit']' es equivalente
+
     -- Inicializa nuestra resolución virtual, que se renderizará dentro
     -- de nuestra ventana real sin importar sus dimensiones, reemplaza a
     -- nuestra llamada love.window.setMode
@@ -121,6 +130,8 @@ function love.update(dt)
             else -- ídem pero hacia abajo
                 ball.dy = math.random(10, 150)
             end
+
+            sounds['paddle_hit']:play()
         end
         if ball:collides(player2) then
             ball.dx = -ball.dx * 1.03
@@ -135,17 +146,21 @@ function love.update(dt)
             else
                 ball.dy = math.random(10, 150)
             end
+
+            sounds['paddle_hit']:play()
         end
 
         -- detectamos colisiones con los bordes superior e inferior de la pantalla
         if ball.y <= 0 then -- si la pelota está en la parte superior de la pantalla
             ball.y = 0
             ball.dy = -ball.dy -- para que vaya en dirección opuesta
+            sounds['wall_hit']:play()
         end
 
         if ball.y >= VIRTUAL_HEIGHT - 4 then -- está en la parte de abajo de la pantalla (-4 ya que es el tamaño de la pelota, sino la pelota saldría de la pantalla)
             ball.y = VIRTUAL_HEIGHT - 4
             ball.dy = -ball.dy
+            sounds['wall_hit']:play()
         end
 
         -- si tocamos el lado derecho o izquiero de la pantalla, volver
@@ -153,6 +168,7 @@ function love.update(dt)
         if ball.x < 0 then -- si hemos sobrepasado el lado izquierdo (jugador 2 puntúa)
             servingPlayer = 1
             player2Score = player2Score + 1
+            sounds['score']:play()
 
             -- si hemos llegado a marcar 10 puntos, el juego termina,
             -- cambiamos el estado a terminado para mostrar el mensaje
@@ -170,6 +186,7 @@ function love.update(dt)
         if ball.x > VIRTUAL_WIDTH then
             servingPlayer = 2
             player1Score = player1Score + 1
+            sounds['score']:play()
 
 
             if player1Score == 10 then 
