@@ -78,7 +78,7 @@ function love.load()
     -- nuestra llamada love.window.setMode
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
         fullscreen = false,
-        resizable = false,
+        resizable = true,
         vsync = true
     })
 
@@ -101,6 +101,15 @@ function love.load()
     -- menus, main game, high score list, etc.), lo usaremos para determinar
     -- el comportamiento del juego al renderizar y al producirse cambios
     gameState = 'start'
+end
+
+--[[
+    Función llamada por LÖVE cada vez que queramos redimensionar la pantalla, 
+    le pasamos el ancho y el alto a PUSH para que nuestra resolución virtual
+    se redimensione también.
+]]
+function love.resize(w, h)
+    push:resize(w, h)
 end
 
 
