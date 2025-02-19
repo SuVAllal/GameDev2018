@@ -76,6 +76,9 @@ function love.load()
     player1Score = 0
     player2Score = 0
 
+    -- jugador que empieza a servir
+    servingPlayer = 1
+
     -- inicializamos las paletas de los jugadores, las hacemos globales
     -- para que otras funciones y módulos puedan usarlas
     player1 = Paddle(10, 30, 5, 20)
@@ -120,7 +123,7 @@ function love.update(dt)
         end
         if ball:collides(player2) then
             ball.dx = -ball.dx * 1.03
-            ball.dx = player2.x - 4 -- 4, ya que es el tamaño de la pelota
+            ball.x = player2.x - 4 -- 4, ya que es el tamaño de la pelota
 
             -- estas funciones no van dentro de la clase Ball ya que collides
             -- solo devuelve true o false, que diga si colisiona o no, los cambios
