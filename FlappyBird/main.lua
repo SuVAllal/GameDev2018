@@ -15,6 +15,12 @@
 -- librería para la resolución virtual
 push = require 'push'
 
+-- librería OOP
+Class = require 'class'
+
+-- importamos la clase Bird
+require 'Bird'
+
 -- dimensiones físicas de la pantalla
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -37,6 +43,9 @@ local GROUND_SCROLL_SPEED = 60 -- el suelo está más cerca, se mueve más rápi
 
 -- punto en el que el bucle del fondo vuelve a 0 (para no mover la imagen infinitamente y quedarnos sin ella)
 local BACKGROUND_LOOPING_POINT = 413
+
+-- creamos una instancia de la clase Bird
+local bird = Bird()
 
 -- Función que carga al empezar el juego
 function love.load()
@@ -90,6 +99,9 @@ function love.draw()
 
     -- dibujamos el suelo encima del fondo, y en la esquina inferior izquierda
     love.graphics.draw(ground, -groundScroll, VIRTUAL_HEIGHT - 16) -- (-16) es la altura de la imagen, sino estaría "escondida"
+
+    -- renderizamos el pájaro usando su propia lógica
+    bird:render()
 
     push:finish()
 end
