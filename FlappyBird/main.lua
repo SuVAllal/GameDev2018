@@ -38,7 +38,7 @@ local backgroundScroll = 0
 local groundScroll = 0
 
 -- velocidad a la que se mueven las imágenes
-local BACKGROUND_SCROLL_SPEED = 30 -- el paisaje está más lejo, se mueve más lento
+local BACKGROUND_SCROLL_SPEED = 30 -- el paisaje está más lejos, se mueve más lento
 local GROUND_SCROLL_SPEED = 60 -- el suelo está más cerca, se mueve más rápido
 
 -- punto en el que el bucle del fondo vuelve a 0 (para no mover la imagen infinitamente y quedarnos sin ella)
@@ -83,6 +83,9 @@ function love.update(dt)
     -- el límite del ancho de la pantalla
     groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
         % VIRTUAL_WIDTH
+
+    -- actualizamos también la posición del pájaro (se cae por la gravedad)
+    bird:update(dt)
 end
 
 function love.draw()
@@ -105,6 +108,3 @@ function love.draw()
 
     push:finish()
 end
-
-
-
