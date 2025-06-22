@@ -10,7 +10,7 @@
 
 Bird = Class{}
 
-local GRAVITY = 20
+local GRAVITY = 15
 
 function Bird:init()
     -- carga la imagen de la paloma de memoria y asigna su ancho y alto
@@ -32,7 +32,7 @@ function Bird:update(dt)
 
     -- añadimos gravedad negativa para saltar cuando pulsamos espacio
     if love.keyboard.wasPressed('space') then
-        self.dy = -5
+        self.dy = -3
     end
 
     -- Aplicamos la velocidad a la posición del eje Y (cambiamos la posición del pájaro)

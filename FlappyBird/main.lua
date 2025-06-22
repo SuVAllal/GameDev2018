@@ -21,6 +21,9 @@ Class = require 'class'
 -- importamos la clase Bird
 require 'Bird'
 
+-- importamos la clase Pipe
+require 'Pipe'
+
 -- dimensiones físicas de la pantalla
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -47,10 +50,20 @@ local BACKGROUND_LOOPING_POINT = 413
 -- creamos una instancia de la clase Bird
 local bird = Bird()
 
+-- table con las Pipes creadas
+local pipes = {}
+
+-- temporizador para generar las Pipes
+local spawnTimer = 0
+
 -- Función que carga al empezar el juego
 function love.load()
     -- Quitamos el blur por defecto
     love.graphics.setDefaultFilter('nearest', 'nearest')
+
+    -- seed the RNG
+    math.randomseed(os.time())
+
     -- Título de la ventana
     love.window.setTitle('Flappy Pigeon')
 
@@ -99,8 +112,27 @@ function love.update(dt)
     groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
         % VIRTUAL_WIDTH
 
+    spawnTimer = spawnTimer + dt
+
+    -- generar una nueva Pipe cada 2 segundos
+    if spawnTimer > 2 then
+        table.insert(pipes, Pipe()) -- generamos una nueva Pipe y la guardamos
+        print('Added a new pipe!')
+        spawnTimer = 0 -- de esta forma espera otros 2 segundos
+    end
+
     -- actualizamos también la posición del pájaro (se cae por la gravedad)
     bird:update(dt)
+
+    -- para cada Pipe en la escena
+    for k, pipe in pairs(pipes) do -- pairs devuelve las claves (NO LOS ÍNDICES) de la tabla para poder iterar en ella
+        pipe:update(dt) -- primero que se mueva la pipe
+
+        -- si la Pipe ya no es visible (ha sobrepasado la esquina izquierda), la borramos de la escena (y de memoria)
+        if pipe.x < -pipe.width then -- usamos el width para asegurarnos de que la pipe ha salido del campo visual, si lo hacemos antes veremos la pipe desaparecer
+            table.remove(pipes, k) -- eliminamos la pipe con la clave k
+        end
+    end
 
     -- reseteamos la input table ya que queremos guardar las teclas de cada frame
     love.keyboard.keysPressed = {}
@@ -117,6 +149,11 @@ function love.draw()
 
     -- dibujamos el fondo empezando por la esquina superior izquierda
     love.graphics.draw(background, -backgroundScroll, 0) -- recibe el elemento a dibujar y su posición
+
+    -- renderizamos todas las Pipes en la escena
+    for k, pipe in pairs(pipes) do
+        pipe:render()
+    end
 
     -- dibujamos el suelo encima del fondo, y en la esquina inferior izquierda
     love.graphics.draw(ground, -groundScroll, VIRTUAL_HEIGHT - 16) -- (-16) es la altura de la imagen, sino estaría "escondida"
