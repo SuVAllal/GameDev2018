@@ -60,6 +60,9 @@ function love.load()
         fullscreen = false,
         resizable = true
     })
+
+    -- inicializamos input table
+    love.keyboard.keysPressed = {}
 end
 
 -- función para cambiar el tamaño de la pantalla (teniendo en cuenta la resolución virtual)
@@ -68,8 +71,20 @@ function love.resize(w, h)
 end
 
 function love.keypressed(key)
+    -- añadimos la tecla pulsada en este frame a la tabla
+    love.keyboard.keysPressed[key] = true
+
     if key == 'escape' then
         love.event.quit()
+    end
+end
+
+-- nueva función usada para ver qué teclas se han activado en este frame
+function love.keyboard.wasPressed(key)
+    if love.keyboard.keysPressed[key] then
+        return true
+    else
+        return false
     end
 end
 
@@ -86,6 +101,9 @@ function love.update(dt)
 
     -- actualizamos también la posición del pájaro (se cae por la gravedad)
     bird:update(dt)
+
+    -- reseteamos la input table ya que queremos guardar las teclas de cada frame
+    love.keyboard.keysPressed = {}
 end
 
 function love.draw()

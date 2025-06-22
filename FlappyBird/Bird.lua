@@ -30,6 +30,11 @@ function Bird:update(dt)
     -- Aplicamos la gravedad a la velocidad (aplicamos la gravedad para que caiga el pájaro)
     self.dy = self.dy + GRAVITY * dt
 
+    -- añadimos gravedad negativa para saltar cuando pulsamos espacio
+    if love.keyboard.wasPressed('space') then
+        self.dy = -5
+    end
+
     -- Aplicamos la velocidad a la posición del eje Y (cambiamos la posición del pájaro)
     self.y = self.y + self.dy
 end
